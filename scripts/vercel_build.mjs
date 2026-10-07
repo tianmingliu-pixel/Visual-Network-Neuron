@@ -3,7 +3,10 @@
 //   在 Vercel 项目 Settings → Environment Variables 里设置 NEUROCORE_API_BASE，例如
 //   https://你的用户名-visual-network-neuron.hf.space
 import fs from "fs";
-const base = (process.env.NEUROCORE_API_BASE || "").trim().replace(/\/+$/, "");
+// 后端地址来源：Vercel 环境变量 NEUROCORE_API_BASE 优先；否则读 deploy/backend_url.txt（serve_public.ps1 -Publish 会更新它）
+let fileUrl = "";
+try { fileUrl = fs.readFileSync("deploy/backend_url.txt", "utf8").trim(); } catch { /* 没有这个文件 */ }
+const base = (process.env.NEUROCORE_API_BASE || fileUrl || "").trim().replace(/\/+$/, "");
 const js = `// 由 scripts/vercel_build.mjs 生成 / generated at deploy time\nwindow.NEUROCORE_API_BASE = ${JSON.stringify(base)};\n`;
 fs.writeFileSync("web/dist/config.js", js);
 if (!fs.existsSync("web/dist/index.html")) {

@@ -130,7 +130,7 @@ powershell -ExecutionPolicy Bypass -File .\deploy.ps1
 
 ## 在线部署
 
-网页放 **Vercel**，PyTorch 训练后端放 **Hugging Face Spaces**（Docker），推送到 GitHub 后两边自动更新。详细步骤见 [DEPLOY.md](DEPLOY.md)。
+网页放 **Vercel**，PyTorch 训练后端跑在**你自己的电脑**上，通过免费的 Cloudflare 隧道接到网页（`.\scripts\serve_public.ps1 -Publish`）。详细步骤见 [DEPLOY.md](DEPLOY.md)。
 
 ```powershell
 .\scripts\publish_github.ps1 -User 你的GitHub用户名     # 推送到 github.com/你的用户名/Visual-Network-Neuron
@@ -173,7 +173,7 @@ seg = nc.build_model("unet_seg", in_channels=3, num_classes=21)     # 图像分�
 ```
 NeuroCore/
 ├─ deploy.ps1                  一键 检查 → 部署 → 演示
-├─ DEPLOY.md                   在线部署（Vercel + Hugging Face）
+├─ DEPLOY.md                   在线部署（Vercel + 本机后端隧道）
 ├─ Dockerfile · vercel.json    云端部署配置
 ├─ scripts/
 │  ├─ common.ps1               共享函数（查找 Python、读取 GPU、选择安装源）

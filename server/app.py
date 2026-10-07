@@ -60,7 +60,7 @@ class GateMiddleware:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        from .config import TOKEN
+        from .config import PRIVATE_READ, TOKEN
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope.get("headers", [])}
         origin = headers.get("origin", "")
         cors = []
@@ -77,7 +77,9 @@ class GateMiddleware:
             await send({"type": "http.response.body", "body": b""})
             return
         path = scope.get("path", "")
-        if TOKEN and scope["method"] == "POST" and path in WRITE_PATHS:
+        needs = (scope["method"] == "POST" and path in WRITE_PATHS) or \
+            (PRIVATE_READ and scope["method"] == "GET" and path.startswith(("/api/data/", "/api/memory/")))
+        if TOKEN and needs:
             import hmac
             given = headers.get("x-neurocore-token", "")
             if not hmac.compare_digest(given.encode(), TOKEN.encode()):
@@ -279,8 +281,9 @@ def create_app(tasks: dict | None = None) -> Starlette:
         """前端用来确认后端是新版本（旧版后端没有这个接口）/ lets the UI detect a stale backend."""
         from .config import CLOUD, TOKEN
         given = request.headers.get("x-neurocore-token", "")
-        return JSONResponse({"version": API_VERSION, "root": "" if CLOUD else ROOT, "cloud": CLOUD,
-                             "auth_required": bool(TOKEN), "authorized": (not TOKEN) or given == TOKEN,
+        ok = (not TOKEN) or given == TOKEN
+        return JSONResponse({"version": API_VERSION, "root": ROOT if (ok and not CLOUD) else "", "cloud": CLOUD,
+                             "auth_required": bool(TOKEN), "authorized": ok,
                              "features": ["folder_upload", "metadata_labels", "npy", "xlsx_builtin", "audio_formats", "memory_store"]})
 
     def _check_path(p):

@@ -130,7 +130,7 @@ powershell -ExecutionPolicy Bypass -File .\deploy.ps1
 
 ## 온라인 배포
 
-UI는 **Vercel**, PyTorch 학습 백엔드는 **Hugging Face Spaces**(Docker)에서 실행되며, GitHub에 푸시하면 양쪽 모두 자동으로 다시 배포됩니다. 자세한 단계는 [DEPLOY.ko.md](DEPLOY.ko.md)를 보세요.
+UI는 **Vercel**에서, PyTorch 학습 백엔드는 **내 컴퓨터**에서 실행되며 무료 Cloudflare 터널로 사이트에 연결됩니다(`.\scripts\serve_public.ps1 -Publish`). 자세한 단계는 [DEPLOY.ko.md](DEPLOY.ko.md)를 보세요.
 
 ```powershell
 .\scripts\publish_github.ps1 -User 내-GitHub-이름     # github.com/내-GitHub-이름/Visual-Network-Neuron 으로 푸시
@@ -173,7 +173,7 @@ seg = nc.build_model("unet_seg", in_channels=3, num_classes=21)     # 이미지 
 ```
 NeuroCore/
 ├─ deploy.ps1                  명령 하나로 점검 → 설치 → 데모
-├─ DEPLOY.md                   온라인 배포 (Vercel + Hugging Face)
+├─ DEPLOY.md                   온라인 배포 (Vercel + 로컬 백엔드 터널)
 ├─ Dockerfile · vercel.json    클라우드 배포 설정
 ├─ scripts/
 │  ├─ common.ps1               공용 함수 (Python 찾기, GPU 읽기, 설치 소스 선택)

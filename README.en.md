@@ -130,7 +130,7 @@ The panel shows growth curves (runs compared + memory lineage), the feature-vect
 
 ## Online deployment
 
-The UI runs on **Vercel**, the PyTorch training backend on **Hugging Face Spaces** (Docker); both redeploy automatically after a push to GitHub. See [DEPLOY.en.md](DEPLOY.en.md).
+The UI runs on **Vercel**; the PyTorch training backend runs on **your own computer** and is connected to the site through a free Cloudflare tunnel (`.\scripts\serve_public.ps1 -Publish`). See [DEPLOY.en.md](DEPLOY.en.md).
 
 ```powershell
 .\scripts\publish_github.ps1 -User your-github-name     # pushes to github.com/your-github-name/Visual-Network-Neuron
@@ -173,7 +173,7 @@ Reserved domain tags: `nlp, vision, generative, graph, audio, multimodal, timese
 ```
 NeuroCore/
 ├─ deploy.ps1                  one command: check → setup → demo
-├─ DEPLOY.md                   online deployment (Vercel + Hugging Face)
+├─ DEPLOY.md                   online deployment (Vercel + local backend tunnel)
 ├─ Dockerfile · vercel.json    cloud deployment config
 ├─ scripts/
 │  ├─ common.ps1               shared helpers (find Python, read GPU, pick wheel index)
