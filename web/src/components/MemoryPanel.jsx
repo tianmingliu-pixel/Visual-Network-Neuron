@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch, fmt, getJSON, readJSON } from "../api.js";
 import { classColor } from "./viz.jsx";
+import { tr } from "../i18n/index.js";
 
 const post = async (url, body) => readJSON(await apiFetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
 const pct = (v) => (v == null ? "—" : (v * 100).toFixed(1) + "%");
@@ -53,7 +54,7 @@ export default function MemoryPanel({ memOpts, setMemOpts, task, isCustom, memTi
     log?.(`下次「开始训练」将从记忆快照 #${s.id}（第 ${s.step} 步，验证 ${pct(s.val_acc)}）继续`);
   };
   const delRun = async (id) => {
-    if (!confirm("删除这次运行的全部记忆（快照、特征向量、权重文件）？")) return;
+    if (!confirm(tr("删除这次运行的全部记忆（快照、特征向量、权重文件）？"))) return;
     try { await post("/api/memory/action", { action: "delete_run", run_id: id }); setRunId(null); loadOv(); } catch (e) { setErr(e.message); }
   };
 
@@ -280,7 +281,7 @@ function Samples({ dataset, tick }) {
   if (!dataset) return <Empty msg="样本记忆只在导入自己的数据时记录。" />;
   if (!items) return <Empty msg="读取中…" />;
   const forget = async () => {
-    if (!confirm("清空这份数据的样本记忆（错题本）？")) return;
+    if (!confirm(tr("清空这份数据的样本记忆（错题本）？"))) return;
     await post("/api/memory/action", { action: "forget_samples", dataset }); setItems([]);
   };
   return (

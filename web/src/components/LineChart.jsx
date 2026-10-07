@@ -2,6 +2,7 @@
 // Lightweight canvas chart with per-pixel min/max decimation — stays smooth with 10k+ points.
 import { useEffect, useRef, useState } from "react";
 import { fmt } from "../api.js";
+import { tr } from "../i18n/index.js";
 
 function ema(values, alpha) {
   const out = new Array(values.length);
@@ -15,7 +16,7 @@ function ema(values, alpha) {
   return out;
 }
 
-export default function LineChart({ title, dataRef, version, series, logScale = false, height = 190 }) {
+export default function LineChart({ title, dataRef, version, series, logScale = false, height = 190, lang }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const [log, setLog] = useState(logScale);
@@ -48,7 +49,7 @@ export default function LineChart({ title, dataRef, version, series, logScale = 
     if (!pts.length || !active.length) {
       ctx.fillStyle = muted;
       ctx.font = "12px system-ui";
-      ctx.fillText("等待训练数据… / waiting for data", pad.l, height / 2);
+      ctx.fillText(tr("等待训练数据… / waiting for data"), pad.l, height / 2);
       geom.current = null;
       return;
     }
@@ -97,7 +98,7 @@ export default function LineChart({ title, dataRef, version, series, logScale = 
       ctx.stroke(); ctx.globalAlpha = 1;
     }
     geom.current = { pad, W, x0, x1, lines, xs };
-  }, [version, width, height, log, series, dataRef]);
+  }, [version, width, height, log, series, dataRef, lang]);
 
   const onMove = (e) => {
     const g = geom.current; if (!g) return;

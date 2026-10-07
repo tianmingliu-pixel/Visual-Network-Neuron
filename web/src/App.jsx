@@ -10,6 +10,8 @@ import Pipeline from "./components/Pipeline.jsx";
 import DataView from "./components/DataView.jsx";
 import MemoryPanel from "./components/MemoryPanel.jsx";
 import BackendSettings from "./components/BackendSettings.jsx";
+import { DockBar, FloatWin, PanelHead, Popout, Resizable, resetLayout, Splitter, useStored } from "./components/Layout.jsx";
+import { setLang, useLang } from "./i18n/index.js";
 
 // 图表系列（放在组件外，避免每次渲染都重画）/ chart series defined once
 const LOSS_SERIES = [
@@ -36,7 +38,20 @@ export default function App() {
   // 机器记忆库 / memory store options for the next run
   const [memOpts, setMemOpts] = useState({ memory: true, resume: null, replay: true, augment: true, mem_every: 0 });
   const [memTick, setMemTick] = useState(0);
-  const [bottom, setBottom] = useState("memory");   // 右下角：memory = 记忆库，explain = 逐行讲解
+  const lang = useLang();
+  // ---- 可拖动布局 / draggable layout ----
+  const [leftFrac, setLeftFrac] = useStored("leftFrac", 0.42);       // 左栏宽度占比
+  const [bottomH, setBottomH] = useStored("bottomH", 0.46);          // 右下停靠区高度占比
+  const [splitFrac, setSplitFrac] = useStored("splitFrac", 0.5);     // 并排时左右占比
+  const [dockLayout, setDockLayout] = useStored("dockLayout", "tabs");// tabs | split
+  const [bottom, setBottom] = useStored("dockActive", "memory");      // 当前标签 / active tab
+  const [modes, setModes] = useStored("panelModes", { memory: "dock", explain: "dock" });   // dock | float | popout
+  const [rects, setRects] = useStored("floatRects", {
+    memory: { x: 120, y: 120, w: 760, h: 520 }, explain: { x: 180, y: 160, w: 640, h: 480 } });
+  const [zOrder, setZOrder] = useState(["memory", "explain"]);
+  const layoutRef = useRef(null), rightRef = useRef(null), dockRef = useRef(null);
+  const setMode = (id, m) => { setModes((x) => ({ ...x, [id]: m })); if (m === "dock") setBottom(id); };
+  const focusWin = (id) => setZOrder((z) => [...z.filter((k) => k !== id), id]);
 
   // 指标放在 ref 里，按动画帧合并刷新，避免每个数据点都触发 React 渲染
   const metricsRef = useRef([]);
@@ -73,7 +88,7 @@ export default function App() {
     graph: setGraph,
     log: (d) => log(d.msg, d.level),
     reset: () => { metricsRef.current = []; setPreview(null); setGraph(null); setTrace(null); bump(); },
-    trace: (d) => { setTrace(d); setPos(0); setPlaying(true); setFollow(true); setBottom("explain"); },
+    trace: (d) => { setTrace(d); setPos(0); setPlaying(true); setFollow(true); setBottom("explain"); },  // 停靠在标签页时切到讲解
     memory: (d) => { setMemTick((t) => t + 1); if (d.event === "snapshot" && d.snapshot?.is_best) log(`🧠 新的最佳记忆：第 ${d.snapshot.step} 步，验证 ${(d.snapshot.val_acc * 100).toFixed(1)}%`); },
   });
 
@@ -249,6 +264,11 @@ export default function App() {
           {(st === "finished" || st === "stopped") && sameTask && <button className="btn" disabled={busy} onClick={() => send("resume")}>+200 步</button>}
           <button className="btn" disabled={busy || !status.task} onClick={() => send("export")} title="导出为 ONNX，可在网页 / C++ / 手机上推理">导出 ONNX</button>
         </div>
+        <div className="lang-switch" title="界面语言 / Language">
+          <button className={lang === "zh" ? "on" : ""} onClick={() => setLang("zh")}>中</button>
+          <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
+        </div>
+        <button className="btn icon" title="恢复默认布局" onClick={resetLayout}>⟲</button>
         <BackendSettings conn={conn} />
       </header>
       {view === "data" ? (
@@ -258,7 +278,8 @@ export default function App() {
       ) : (<>
       {task && <div className="desc">{task.description}</div>}
 
-      <main className="layout">
+      <main className="layout" ref={layoutRef}
+        style={{ gridTemplateColumns: `minmax(300px, ${(leftFrac * 100).toFixed(2)}%) 10px minmax(380px, 1fr)` }}>
         <section className="left">
           <div className="stats">
             <div className="stat"><b>{STATE_CN[st] || st}</b><span>状态 · {status.device || "—"}</span></div>
@@ -267,40 +288,105 @@ export default function App() {
             <div className="stat"><b>{last?.acc != null ? (last.acc * 100).toFixed(1) + "%" : "—"}</b><span>准确率</span></div>
             <div className="stat"><b>{status.ips || 0}</b><span>迭代/秒</span></div>
           </div>
-          <NetworkGraph graph={graph} phase={pulse} onJump={jump} taskTitle={tasks.find((t) => t.id === status.task)?.title} />
-          <Pipeline steps={pipeline} active={activeStage} onJump={jump} source={stageSource} />
-          <LineChart title="损失 Loss" dataRef={metricsRef} version={mv} series={LOSS_SERIES} logScale />
-          <LineChart title="准确率 · 梯度范数" dataRef={metricsRef} version={mv} series={AUX_SERIES} height={150} />
-          <Preview preview={preview} />
-          <div className="card logs">
-            <div className="card-head"><span>日志</span></div>
-            <div className="log-body">
-              {logs.slice().reverse().map((l, i) => <div key={i} className={"log " + l.level}><span className="muted">{l.t}</span> {l.msg}</div>)}
+          <Resizable id="graph" min={200}>{(h) =>
+            <NetworkGraph graph={graph} phase={pulse} onJump={jump} taskTitle={tasks.find((t) => t.id === status.task)?.title}
+              height={h ? Math.max(120, h - 96) : undefined} lang={lang} />}</Resizable>
+          <Resizable id="pipeline" min={90}><Pipeline steps={pipeline} active={activeStage} onJump={jump} source={stageSource} /></Resizable>
+          <Resizable id="loss" min={120}>{(h) =>
+            <LineChart title="损失 Loss" dataRef={metricsRef} version={mv} series={LOSS_SERIES} logScale height={h ? Math.max(60, h - 46) : 190} lang={lang} />}</Resizable>
+          <Resizable id="aux" min={120}>{(h) =>
+            <LineChart title="准确率 · 梯度范数" dataRef={metricsRef} version={mv} series={AUX_SERIES} height={h ? Math.max(60, h - 46) : 150} lang={lang} />}</Resizable>
+          <Resizable id="preview" min={90}><Preview preview={preview} /></Resizable>
+          <Resizable id="logs" min={70}>
+            <div className="card logs">
+              <div className="card-head"><span>日志</span></div>
+              <div className="log-body">
+                {logs.slice().reverse().map((l, i) => <div key={i} className={"log " + l.level}><span className="muted">{l.t}</span> {l.msg}</div>)}
+              </div>
             </div>
-          </div>
+          </Resizable>
         </section>
 
-        <section className="right">
+        <Splitter dir="x" onReset={() => setLeftFrac(0.42)} onDrag={(x) => {
+          const r = layoutRef.current.getBoundingClientRect();
+          setLeftFrac(Math.min(0.8, Math.max(0.18, (x - r.left) / r.width)));
+        }} />
+
+        <section className="right" ref={rightRef}>
           <TracePlayer trace={trace} order={order} pos={pos} setPos={(p) => { setPlaying(false); setPos(p); }}
             playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} quiet={quiet} setQuiet={setQuiet}
             onRecord={() => send("trace")} busy={busy} />
-          <div className="code-explain">
-            <CodePanel files={files} active={activeFile} onSelect={(f) => { setFollow(false); setActiveFile(f); }}
-              source={sources[activeFile]} curLine={ev && evFile === activeFile ? ev.l : null}
-              visited={visited[activeFile]} showComments={showComments} setShowComments={setShowComments}
-              pin={pin && pin.file === activeFile ? pin : null} />
-            {!follow && trace && <button className="chip follow" onClick={() => setFollow(true)}>跟随执行位置</button>}
-            <div className="bottom-pane">
-              <div className="bottom-tabs">
-                <button className={"mtab" + (bottom === "memory" ? " on" : "")} onClick={() => setBottom("memory")}>🧠 机器记忆库</button>
-                <button className={"mtab" + (bottom === "explain" ? " on" : "")} onClick={() => setBottom("explain")}>逐行讲解{trace ? " ●" : ""}</button>
+          {(() => {
+            // ---- 停靠区：机器记忆库 / 逐行讲解 可以标签页、并排、浮动或弹出到新窗口 ----
+            const PANELS = [
+              { id: "memory", title: "🧠 机器记忆库", render: () => (
+                <MemoryPanel memOpts={memOpts} setMemOpts={setMemOpts} task={taskId} isCustom={taskId === "custom"}
+                  memTick={memTick} running={running} log={log} />) },
+              { id: "explain", title: "逐行讲解", badge: !!trace, render: () => (
+                <Explain trace={trace} ev={ev} path={ev ? paths[order[pos]] : []} source={evFile ? sources[evFile] : null} />) },
+            ];
+            const docked = PANELS.filter((p) => modes[p.id] === "dock");
+            const popped = PANELS.filter((p) => modes[p.id] === "popout");
+            const act = docked.find((p) => p.id === bottom) || docked[0];
+            const shown = dockLayout === "split" ? docked : act ? [act] : [];
+            const hasDock = docked.length > 0 || popped.length > 0;
+            const body = (p) => (
+              <div className="dock-panel" key={p.id} style={dockLayout === "split" && docked.length > 1
+                ? { flex: `0 0 calc(${((p.id === docked[0].id ? splitFrac : 1 - splitFrac) * 100).toFixed(2)}% - 5px)` } : undefined}>
+                <PanelHead title={p.title} onFloat={() => { setMode(p.id, "float"); focusWin(p.id); }} onPopout={() => setMode(p.id, "popout")} />
+                <div className="panel-body">{p.render()}</div>
               </div>
-              {bottom === "memory"
-                ? <MemoryPanel memOpts={memOpts} setMemOpts={setMemOpts} task={taskId} isCustom={taskId === "custom"}
-                    memTick={memTick} running={running} log={log} />
-                : <Explain trace={trace} ev={ev} path={ev ? paths[order[pos]] : []} source={evFile ? sources[evFile] : null} />}
-            </div>
-          </div>
+            );
+            return (<>
+              <div className="code-explain" style={{ gridTemplateRows: hasDock ? `minmax(120px, 1fr) 10px minmax(120px, ${(bottomH * 100).toFixed(2)}%)` : "minmax(0, 1fr)" }}>
+                <div className="code-wrap">
+                  <CodePanel files={files} active={activeFile} onSelect={(f) => { setFollow(false); setActiveFile(f); }}
+                    source={sources[activeFile]} curLine={ev && evFile === activeFile ? ev.l : null}
+                    visited={visited[activeFile]} showComments={showComments} setShowComments={setShowComments}
+                    pin={pin && pin.file === activeFile ? pin : null} />
+                  {!follow && trace && <button className="chip follow" onClick={() => setFollow(true)}>跟随执行位置</button>}
+                </div>
+                {hasDock && <Splitter dir="y" title="拖动调整高度" onReset={() => setBottomH(0.46)} onDrag={(_, y) => {
+                  const r = rightRef.current.getBoundingClientRect();
+                  setBottomH(Math.min(0.85, Math.max(0.15, (r.bottom - y) / r.height)));
+                }} />}
+                {hasDock && (
+                  <div className="dock" ref={dockRef}>
+                    <DockBar panels={docked} active={act?.id} setActive={setBottom} layout={dockLayout} setLayout={setDockLayout}
+                      popped={popped} onRecall={(id) => setMode(id, "dock")} />
+                    <div className={"dock-body " + dockLayout}>
+                      {shown.length === 2 ? <>
+                        {body(shown[0])}
+                        <Splitter dir="x" onReset={() => setSplitFrac(0.5)} onDrag={(x) => {
+                          const r = dockRef.current.getBoundingClientRect();
+                          setSplitFrac(Math.min(0.85, Math.max(0.15, (x - r.left) / r.width)));
+                        }} />
+                        {body(shown[1])}
+                      </> : shown.map(body)}
+                      {!shown.length && <div className="empty">{popped.map((p) => p.title).join(" · ")} ↗</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {PANELS.filter((p) => modes[p.id] === "float").map((p) => (
+                <FloatWin key={p.id} id={p.id} title={p.title} rect={rects[p.id]} setRect={(r) => setRects((x) => ({ ...x, [p.id]: r }))}
+                  z={zOrder.indexOf(p.id)} onFocus={() => focusWin(p.id)}
+                  onDock={() => setMode(p.id, "dock")} onPopout={() => setMode(p.id, "popout")}>
+                  <div className="panel-body">{p.render()}</div>
+                </FloatWin>
+              ))}
+              {popped.map((p) => (
+                <Popout key={p.id} id={p.id} title={p.title.replace(/^\S+\s/, "")}
+                  onClose={(why) => { setMode(p.id, "dock"); if (why === "blocked") log("浏览器拦截了弹出窗口，请允许本站弹窗后再试", "warn"); }}>
+                  <div className="popout-panel">
+                    <div className="panel-head"><span>{p.title}</span>
+                      <span className="win-btns"><button className="wbtn" onClick={() => setMode(p.id, "dock")}>⇲ <span className="wlabel">停靠回来</span></button></span></div>
+                    <div className="panel-body">{p.render()}</div>
+                  </div>
+                </Popout>
+              ))}
+            </>);
+          })()}
         </section>
       </main>
       </>)}

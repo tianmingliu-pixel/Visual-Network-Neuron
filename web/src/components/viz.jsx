@@ -1,6 +1,7 @@
 // 小型可视化组件 / small reusable charts (SVG / canvas, no dependencies)
 import { useEffect, useRef } from "react";
 import { fmt } from "../api.js";
+import { tr, useLang } from "../i18n/index.js";
 
 const BASE = ["#f7768e", "#9ece6a", "#7aa2f7", "#e0af68", "#bb9af7", "#7dcfff", "#ff9e64", "#73daca", "#c0caf5", "#db4b4b"];
 export const classColor = (i) => (i < BASE.length ? BASE[i] : `hsl(${(i * 47) % 360} 65% 62%)`);
@@ -53,6 +54,7 @@ export function Hist({ hist, width = 120, height = 28, color = "#7aa2f7" }) {
 // Scatter: categorical colors, or a value ramp for regression; optional y=x line.
 export function Scatter({ points, mode = "class", size = 300, diag = false, xLabel, yLabel }) {
   const ref = useRef(null);
+  const lang = useLang();
   useEffect(() => {
     const cv = ref.current, dpr = window.devicePixelRatio || 1, S = size;
     cv.width = S * dpr; cv.height = S * dpr;
@@ -74,9 +76,9 @@ export function Scatter({ points, mode = "class", size = 300, diag = false, xLab
     }
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#7f879b"; ctx.font = "10px system-ui";
-    if (xLabel) ctx.fillText(xLabel, pad, S - 3);
-    if (yLabel) { ctx.save(); ctx.translate(10, pad + 60); ctx.rotate(-Math.PI / 2); ctx.fillText(yLabel, 0, 0); ctx.restore(); }
-  }, [points, mode, size, diag, xLabel, yLabel]);
+    if (xLabel) ctx.fillText(tr(xLabel), pad, S - 3);
+    if (yLabel) { ctx.save(); ctx.translate(10, pad + 60); ctx.rotate(-Math.PI / 2); ctx.fillText(tr(yLabel), 0, 0); ctx.restore(); }
+  }, [points, mode, size, diag, xLabel, yLabel, lang]);
   return <canvas ref={ref} style={{ width: size, height: size }} />;
 }
 

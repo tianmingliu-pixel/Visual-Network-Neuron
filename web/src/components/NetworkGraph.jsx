@@ -6,6 +6,7 @@
 // 静态部分画在离屏画布上，只在数据更新时重画；动画每帧只叠加脉冲，保证流畅。
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fmt } from "../api.js";
+import { tr } from "../i18n/index.js";
 
 const POS = [224, 140, 70], NEG = [79, 159, 230], FWD = "#5ee0ff", BWD = "#ff5fd2";
 const CLASS_COLORS = ["#f7768e", "#9ece6a", "#7aa2f7", "#e0af68", "#bb9af7"];
@@ -72,12 +73,12 @@ function drawMLP(ctx, g, W, H, pos) {
   const last = pos[L - 1];
   if (g.regression) {                                   // 回归：显示预测值与真实值 / regression output
     const p = last[0];
-    ctx.fillStyle = "#e0af68"; ctx.fillText(g.out_names[0], p.x + 14, p.y - 9);
-    ctx.fillStyle = "#d7dce8"; ctx.fillText(`预测 ${(+g.regression.pred).toPrecision(4)}`, p.x + 14, p.y + 6);
-    ctx.fillStyle = "#7f879b"; ctx.fillText(`真实 ${(+g.regression.target).toPrecision(4)}`, p.x + 14, p.y + 20);
+    ctx.fillStyle = "#e0af68"; ctx.fillText(tr(g.out_names[0]), p.x + 14, p.y - 9);
+    ctx.fillStyle = "#d7dce8"; ctx.fillText(tr(`预测 ${(+g.regression.pred).toPrecision(4)}`), p.x + 14, p.y + 6);
+    ctx.fillStyle = "#7f879b"; ctx.fillText(tr(`真实 ${(+g.regression.target).toPrecision(4)}`), p.x + 14, p.y + 20);
   } else g.out_names.forEach((nm, i) => {
     const p = last[i], pr = g.probs[i];
-    ctx.fillStyle = CLASS_COLORS[i % CLASS_COLORS.length]; ctx.fillText(nm, p.x + 14, p.y);
+    ctx.fillStyle = CLASS_COLORS[i % CLASS_COLORS.length]; ctx.fillText(tr(nm), p.x + 14, p.y);
     const bx = p.x + 52, bw = W - bx - 44;
     ctx.fillStyle = "rgba(255,255,255,.07)"; ctx.fillRect(bx, p.y - 5, bw, 10);
     ctx.fillStyle = CLASS_COLORS[i % CLASS_COLORS.length]; ctx.fillRect(bx, p.y - 5, bw * pr, 10);
@@ -86,7 +87,7 @@ function drawMLP(ctx, g, W, H, pos) {
   });
   // 层名 / layer titles
   ctx.textAlign = "center"; ctx.fillStyle = "#7f879b"; ctx.font = "12px system-ui";
-  const names = ["输入层", ...g.sizes.slice(1, -1).map((_, i) => `隐藏层 ${i + 1}`), "输出层"];
+  const names = ["输入层", ...g.sizes.slice(1, -1).map((_, i) => `隐藏层 ${i + 1}`), "输出层"].map(tr);
   const ts = g.true_sizes || g.sizes;
   pos.forEach((col, l) => ctx.fillText(`${names[l]} (${ts[l] > g.sizes[l] ? g.sizes[l] + "/" + ts[l] : ts[l]})`, col[0].x, H - 12));
 }
@@ -127,23 +128,23 @@ function drawArch(ctx, g, W, H, lay, hover) {
     }
     ctx.save(); ctx.translate(L.x, H - 62); ctx.rotate(-Math.PI / 4);
     ctx.fillStyle = hover === k ? "#fff" : "#8a93a8"; ctx.font = "10.5px system-ui"; ctx.textAlign = "right";
-    ctx.fillText(k === 0 ? "输入" : L.col.name, 0, 0); ctx.restore();
+    ctx.fillText(k === 0 ? tr("输入") : L.col.name, 0, 0); ctx.restore();
   });
 }
 
 // ---- 组件 / component ---------------------------------------------------------------------
-export default function NetworkGraph({ graph, phase, onJump, taskTitle }) {
+export default function NetworkGraph({ graph, phase, onJump, taskTitle, height, lang }) {
   const wrapRef = useRef(null), cvRef = useRef(null), staticRef = useRef(null);
   const W = useSize(wrapRef);
   const [hover, setHover] = useState(null);
   const isMLP = graph?.kind === "mlp";
-  const H = isMLP ? 380 : 330;
+  const H = height ?? (isMLP ? 380 : 330);
   const minW = graph && !isMLP ? Math.max(W, 60 + (graph.nodes.length + 1) * 34) : W;
 
   const layout = useMemo(() => {
     if (!graph) return null;
     return isMLP ? mlpLayout(graph, minW, H) : archLayout(graph, minW, H);
-  }, [graph, minW, H, isMLP]);
+  }, [graph, minW, H, isMLP, lang]);
 
   // 静态层：数据变化时重画到离屏画布 / static layer
   useEffect(() => {
@@ -203,7 +204,7 @@ export default function NetworkGraph({ graph, phase, onJump, taskTitle }) {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [graph, layout, minW, H, isMLP]);
+  }, [graph, layout, minW, H, isMLP, lang]);
 
   // 悬停与点击 / hover & click
   const hitColumn = (e) => {
