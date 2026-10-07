@@ -34,10 +34,12 @@ function Invoke-Cmd {
     return , @($out | ForEach-Object { "$_" })
 }
 
+# 注意：Windows PowerShell 5.1 传参给外部程序时会吃掉双引号，所以 -c 代码里不能用双引号
+# Windows PowerShell 5.1 strips embedded double quotes from native-command arguments: keep -c code free of them.
 function Get-PythonVersion {
     param([string[]]$Cmd)
     try {
-        $o = Invoke-Cmd $Cmd @('-c', 'import sys;print("%d.%d.%d" % sys.version_info[:3])')
+        $o = Invoke-Cmd $Cmd @('-c', 'import sys;print(*sys.version_info[:3],sep=chr(46))')
         if ($LASTEXITCODE -eq 0 -and ($o -join '') -match '^\s*(\d+\.\d+\.\d+)') { return [version]$Matches[1] }
     } catch { }
     return $null
@@ -48,7 +50,10 @@ function Get-PythonVersion {
 function Get-PythonCandidates {
     param([string]$Preferred)
     $cands = New-Object System.Collections.Generic.List[object]
-    if ($Preferred) { $cands.Add(@($Preferred -split ' ')) }
+    if ($Preferred) {
+        # 完整路径（可能含空格）当作一个整体；否则如 "py -3.12" 按空格拆开 / a full path may contain spaces
+        if (Test-Path -LiteralPath $Preferred -PathType Leaf) { $cands.Add(@($Preferred)) } else { $cands.Add(@($Preferred -split ' ')) }
+    }
     foreach ($n in 'python', 'python3') { if (Test-Command $n) { $cands.Add(@($n)) } }
     if (Test-Command 'py') {
         foreach ($v in '3.13', '3.12', '3.11', '3.10', '3.14') { $cands.Add(@('py', "-$v")) }

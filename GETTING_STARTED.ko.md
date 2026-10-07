@@ -198,6 +198,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | 증상 | 해결 |
 |---|---|
 | `…ps1 파일을 로드할 수 없습니다. 이 시스템에서 스크립트를 실행할 수 없으므로…` | 3단계 실행 |
+| 실행 후 **멈춘 채 아무것도 출력되지 않음** (`=== NeuroCore environment check ===`조차 없음) | cmd 창이라 스크립트가 시작되지 않은 것입니다. `Ctrl + C` 후 `powershell -ExecutionPolicy Bypass -File .\scripts\check_env.ps1` 사용, 또는 진짜 PowerShell 열기(프롬프트가 `PS`로 시작) |
+| `'.\scripts\…ps1' 용어가 cmdlet… 이름으로 인식되지 않습니다` | 프로젝트 폴더 안이 아님: `Test-Path .\scripts\setup_env.ps1` 실행, `False`면 `cd C:\NeuroCore` (ZIP이면 한 단계 더 들어간 폴더로) |
+| `'.\scripts\…ps1'은(는) 내부 또는 외부 명령… 이 아닙니다` | cmd를 연 것이며 PowerShell이 아님. 또는 만능 방법 `powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1` 사용 |
+| `…디지털 서명되지 않았습니다` | ZIP 파일에 표시가 남음: `Get-ChildItem . -Recurse \| Unblock-File` |
 | `python`을 인식할 수 없음 | 「Add to PATH」에 체크하고 Python을 다시 설치한 뒤 PowerShell을 **다시 열기** |
 | `setup_env.ps1`이 Python 버전 오류 | 3.10–3.14 필요: `winget install Python.Python.3.12` |
 | 8765 포트 사용 중 | 이전 `run.ps1` 창을 닫거나, `.\scripts\run.ps1 -Task ui -Port 8766` 실행 후 백엔드 패널에 `http://127.0.0.1:8766` 입력 |

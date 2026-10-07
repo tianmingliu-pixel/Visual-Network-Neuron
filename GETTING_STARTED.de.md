@@ -198,6 +198,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | Symptom | Lösung |
 |---|---|
 | `Die Datei …ps1 kann nicht geladen werden, da die Ausführung von Skripts auf diesem System deaktiviert ist` | Schritt 3 ausführen |
+| Es **hängt ohne jede Ausgabe** (nicht einmal `=== NeuroCore environment check ===`) | Sie sind in cmd, das Skript wurde nie gestartet. `Strg + C` drücken, dann `powershell -ExecutionPolicy Bypass -File .\scripts\check_env.ps1` verwenden oder echtes PowerShell öffnen (die Eingabeaufforderung beginnt mit `PS`) |
+| `Die Benennung ".\scripts\…ps1" wurde nicht als Name eines Cmdlet… erkannt` | Sie sind nicht im Projektordner: `Test-Path .\scripts\setup_env.ps1` ausführen; bei `False` `cd C:\NeuroCore` (bei ZIP in den zusätzlichen Unterordner wechseln) |
+| `Der Befehl ".\scripts\…ps1" ist entweder falsch geschrieben oder konnte nicht gefunden werden` | das ist cmd, nicht PowerShell; oder die universelle Form `powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1` verwenden |
+| `…ist nicht digital signiert` | Dateien aus dem ZIP sind markiert: `Get-ChildItem . -Recurse \| Unblock-File` |
 | `python` wird nicht erkannt | Python mit angehaktem „Add to PATH" neu installieren, dann PowerShell **neu öffnen** |
 | `setup_env.ps1` bemängelt die Python-Version | 3.10–3.14 nötig: `winget install Python.Python.3.12` |
 | Port 8765 belegt | früheres `run.ps1`-Fenster schließen; oder `.\scripts\run.ps1 -Task ui -Port 8766` und im Backend-Feld `http://127.0.0.1:8766` eintragen |

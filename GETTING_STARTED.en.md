@@ -198,6 +198,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | Symptom | Fix |
 |---|---|
 | `…ps1 cannot be loaded because running scripts is disabled on this system` | do Step 3 |
+| It **hangs with no output at all** (not even `=== NeuroCore environment check ===`) | you are in cmd and the script never started. Press `Ctrl + C`, then use `powershell -ExecutionPolicy Bypass -File .\scripts\check_env.ps1`, or open real PowerShell (the prompt starts with `PS`) |
+| `The term '.\scripts\…ps1' is not recognized…` | you are not in the project folder: run `Test-Path .\scripts\setup_env.ps1`; if `False`, `cd C:\NeuroCore` (with a ZIP, step into the extra nested folder) |
+| `'.\scripts\…ps1' is not recognized as an internal or external command` | that is cmd, not PowerShell; or use the universal form `powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1` |
+| `…is not digitally signed` | files from the ZIP are marked: `Get-ChildItem . -Recurse \| Unblock-File` |
 | `python` is not recognized | reinstall Python with "Add to PATH" ticked, then **reopen** PowerShell |
 | `setup_env.ps1` complains about the Python version | 3.10–3.14 needed: `winget install Python.Python.3.12` |
 | Port 8765 in use | close the earlier `run.ps1` window; or use `.\scripts\run.ps1 -Task ui -Port 8766` and enter `http://127.0.0.1:8766` in the Backend panel |

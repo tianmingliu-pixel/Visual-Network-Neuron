@@ -38,6 +38,7 @@ if ($psv -ge [version]'5.1') { Add-Result 'PowerShell' 'PASS' "$psv ($($PSVersio
 else { Add-Result 'PowerShell' 'FAIL' "$psv" 'Install PowerShell 5.1+ or 7+' }
 
 # --- Python -----------------------------------------------------------------
+Write-Host '  ... 检查 Python / checking Python' -ForegroundColor DarkGray
 $py = Find-Python -Preferred $Python
 if (-not $py) {
     Add-Result 'Python' 'FAIL' 'not found' 'Install Python 3.12 from https://www.python.org (tick "Add to PATH") or: winget install Python.Python.3.12'
@@ -62,6 +63,7 @@ if (Test-Command 'node') { Add-Result 'Node.js' 'PASS' ("node " + ((& node --ver
 else { Add-Result 'Node.js' 'INFO' 'not found - optional (the prebuilt UI works without it)' 'For UI development: winget install OpenJS.NodeJS.LTS' }
 
 # --- GPU / CUDA ---------------------------------------------------------------
+Write-Host '  ... 检查显卡 / checking GPU' -ForegroundColor DarkGray
 $nv = Get-NvidiaInfo
 if ($nv) {
     foreach ($g in $nv.Gpus) { Add-Result 'GPU' 'PASS' "$($g.Name) | driver $($g.Driver) | $($g.Memory)" }
@@ -79,6 +81,7 @@ $cands = Get-TorchIndexCandidates -CudaVersion $(if ($nv) { $nv.CudaVersion } el
 Add-Result 'PyTorch wheel' 'INFO' ("recommended index order: " + ($cands -join ' -> '))
 
 # --- RAM / Disk -------------------------------------------------------------
+Write-Host '  ... 检查内存和磁盘 / checking RAM and disk' -ForegroundColor DarkGray
 try {
     if ($script:OnWindows) {
         $ramGB = [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 1)
@@ -115,6 +118,7 @@ if ($script:OnWindows) {
 }
 
 # --- Existing system PyTorch / 本机已装的 PyTorch --------------------------------
+Write-Host '  ... 检查已安装的 PyTorch，第一次可能要 1 分钟 / checking installed PyTorch (first run may take a minute)' -ForegroundColor DarkGray
 $sysTorch = Find-TorchPython -Preferred $Python
 if ($sysTorch) {
     $t = $sysTorch.Torch
@@ -143,6 +147,7 @@ if (Test-Path $venvPy) {
     } else { Add-Result 'PyTorch (.venv)' 'WARN' '.venv exists but torch not importable' '.\scripts\setup_env.ps1' }
 } else { Add-Result 'PyTorch (.venv)' 'INFO' 'not installed yet' '.\scripts\setup_env.ps1' }
 
+Write-Host ''
 # --- Report / 报告 ------------------------------------------------------------
 foreach ($r in $results) {
     Write-Status $r.Status ("{0,-18} {1}" -f $r.Item, $r.Detail)
@@ -152,7 +157,13 @@ $fails = @($results | Where-Object Status -eq 'FAIL').Count
 $warns = @($results | Where-Object Status -eq 'WARN').Count
 Write-Host ""
 if ($fails -eq 0) { Write-Status 'PASS' "Ready to deploy ($warns warning(s)). Next: .\scripts\setup_env.ps1" }
-else { Write-Status 'FAIL' "$fails blocking issue(s). Fix the items above, then re-run this check." }
+else {
+    Write-Status 'FAIL' "$fails blocking issue(s). Fix these, then re-run this check / 先修好下面这些再重新检查:"
+    foreach ($r in ($results | Where-Object Status -eq 'FAIL')) {
+        Write-Host ("   x {0}: {1}" -f $r.Item, $r.Detail) -ForegroundColor Red
+        if ($r.Fix) { Write-Host ("     -> " + $r.Fix) -ForegroundColor Yellow }
+    }
+}
 
 if ($ReportPath) {
     [pscustomobject]@{ timestamp = (Get-Date).ToString('s'); torch_index_candidates = $cands; checks = $results } |

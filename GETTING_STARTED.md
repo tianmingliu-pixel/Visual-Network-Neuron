@@ -198,6 +198,10 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | 现象 | 解决 |
 |---|---|
 | `无法加载文件 …ps1，因为在此系统上禁止运行脚本` | 做第 3 步 |
+| 运行后**卡住、一个字都不输出**（连 `=== NeuroCore environment check ===` 都没有） | 你在 cmd 里，脚本根本没启动。按 `Ctrl + C`，改用 `powershell -ExecutionPolicy Bypass -File .\scripts\check_env.ps1`，或打开真正的 PowerShell（提示符以 `PS` 开头） |
+| `无法将“.\scripts\…ps1”项识别为 cmdlet…` | 不在项目文件夹里：运行 `Test-Path .\scripts\setup_env.ps1`，`False` 就 `cd C:\NeuroCore`；ZIP 多套了一层就进去那一层 |
+| `'.\scripts\…ps1' 不是内部或外部命令` | 打开的是 cmd，不是 PowerShell；或改用万能写法 `powershell -ExecutionPolicy Bypass -File .\scripts\setup_env.ps1` |
+| `…未经数字签名` | ZIP 下载的文件被标记：`Get-ChildItem . -Recurse \| Unblock-File` |
 | `python` 不是内部或外部命令 | 重新安装 Python 并勾选「Add to PATH」，然后**重新打开** PowerShell |
 | `setup_env.ps1` 报 Python 版本不对 | 需要 3.10–3.14：`winget install Python.Python.3.12` |
 | 端口 8765 被占用 | 关掉之前开的 `run.ps1` 窗口；或用 `.\scripts\run.ps1 -Task ui -Port 8766`，然后在后端面板里手动填 `http://127.0.0.1:8766` |
