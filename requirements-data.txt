@@ -1,0 +1,5 @@
+# 可选：读取 Excel / Parquet 表格 / optional: Excel & Parquet support
+pandas
+openpyxl
+pyarrow
+soundfile      # 可选：读取 .flac / .ogg / .mp3 音频

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "echo skip-install",
+  "buildCommand": "node scripts/vercel_build.mjs",
+  "outputDirectory": "web/dist",
+  "headers": [
+    { "source": "/config.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ]
+}

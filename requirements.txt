@@ -1,0 +1,7 @@
+# torch 由 scripts/setup_env.ps1 按本机 GPU/CUDA 自动选择安装源安装
+# torch is installed by scripts/setup_env.ps1 from the index that matches your GPU/CUDA driver
+numpy
+pytest
+starlette>=0.40
+uvicorn>=0.30
+pillow

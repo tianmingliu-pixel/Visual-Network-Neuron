@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+data
+exports
+web/node_modules
+deploy.log
+env_report.json

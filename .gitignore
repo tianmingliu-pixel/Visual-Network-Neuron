@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+deploy.log
+env_report.json
+web/node_modules/
+exports/
+data/
+.vercel/

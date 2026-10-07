@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurocore"
+version = "0.1.0"
+description = "Extensible PyTorch core: Transformer, ViT, U-Net, DiT (+DDPM), with a plug-in registry for future domains"
+requires-python = ">=3.10"
+dependencies = ["torch>=2.1", "numpy"]
+
+[tool.setuptools.packages.find]
+include = ["neurocore*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

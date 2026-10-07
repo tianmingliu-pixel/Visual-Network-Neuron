@@ -1,0 +1,33 @@
+# 每次推送到 main：把后端同步到 Hugging Face Space（Docker），Space 会自动重新构建
+# On every push to main, sync the backend to a Hugging Face Space (Docker SDK).
+# 需要在 GitHub 仓库 Settings → Secrets and variables → Actions 里设置：
+#   Secret   HF_TOKEN   Hugging Face 的 Write token
+#   Variable HF_SPACE   例如 your-name/visual-network-neuron
+name: Deploy backend to Hugging Face Space
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ vars.HF_SPACE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Push to Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          set -e
+          test -n "$HF_TOKEN" || { echo "缺少 Secret HF_TOKEN"; exit 1; }
+          HF_USER="${HF_SPACE%%/*}"
+          rm -rf /tmp/space && mkdir /tmp/space
+          rsync -a --exclude .git --exclude .github --exclude data --exclude exports --exclude web/node_modules ./ /tmp/space/
+          # Space 需要带配置头的 README / Spaces read their config from README front matter
+          { printf -- "---\ntitle: Visual Network Neuron\nemoji: 🧠\ncolorFrom: indigo\ncolorTo: purple\nsdk: docker\napp_port: 7860\npinned: false\n---\n\n"; cat README.md; } > /tmp/space/README.md
+          cd /tmp/space
+          git init -q -b main
+          git config user.name "github-actions"; git config user.email "actions@github.com"
+          git add -A && git commit -qm "Deploy ${GITHUB_SHA::7} from GitHub"
+          git push --force "https://${HF_USER}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main
