@@ -13,7 +13,27 @@ try {                                    // 支持 ?api=https://xxx 直接指定
   const q = new URLSearchParams(location.search).get("api");
   if (q != null) ls.set("nc.api", q.replace(/\/+$/, ""));
 } catch { /* 忽略 */ }
-export const apiBase = () => { const v = ls.get("nc.api"); return v != null ? v : BUILD_BASE; };
+// 自动选择后端（页面打开时执行一次）/ automatic backend choice, resolved once at startup:
+//   ① 手动设置过（右上角「后端」或 ?api=）→ 用它
+//   ② 页面本身就是后端打开的（本机 run.ps1 -Task ui）→ 同源
+//   ③ 访问者自己电脑上正在运行后端（127.0.0.1:8765）→ 用访问者自己的电脑训练
+//   ④ 否则 → 网站默认后端（作者电脑经隧道），没有口令时只能观看
+export const LOCAL = "http://127.0.0.1:8765";
+let resolved = null, source = "default";
+async function probe(base, ms = 1500) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), ms);
+  try { const r = await fetch(base + "/api/version", { signal: ac.signal, cache: "no-store" }); return r.ok; }
+  catch { return false; } finally { clearTimeout(t); }
+}
+export async function resolveBackend() {
+  if (ls.get("nc.api") != null) { source = "manual"; return; }
+  if (!BUILD_BASE && await probe("")) { resolved = ""; source = "same"; return; }
+  if (location.origin !== LOCAL && await probe(LOCAL)) { resolved = LOCAL; source = "local"; return; }
+  resolved = BUILD_BASE; source = BUILD_BASE ? "remote" : "none";
+}
+export const backendSource = () => source;
+export const apiBase = () => { const v = ls.get("nc.api"); return v != null ? v : resolved != null ? resolved : BUILD_BASE; };
 export const buildBase = () => BUILD_BASE;
 export const getToken = () => ls.get("nc.token") || "";
 export const saveBackend = (base, token) => { ls.set("nc.api", base == null ? null : base.replace(/\/+$/, "")); ls.set("nc.token", token); };

@@ -357,3 +357,8 @@ body.popout-body { margin: 0; height: 100vh; background: var(--bg); color: var(-
 }
 .panel-body > .card.mem { min-height: 0; }
 .mtab { white-space: nowrap; }
+.chip.watch { border-color: var(--warn); color: var(--warn); margin-right: 6px; }
+.backend { display: flex; align-items: center; }
+.watch-help { font-size: 12px; background: rgba(224,175,104,.08); border: 1px solid rgba(224,175,104,.4); border-radius: 8px; padding: 6px 10px; }
+.watch-help ol { margin: 4px 0 0; padding-left: 18px; }
+.watch-help a { color: var(--accent); }

@@ -131,11 +131,11 @@ if ($Publish) {
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host "  后端公网地址：$url   （已复制到剪贴板）" -ForegroundColor Green
-if ($Site) { Write-Host "  打开网站：     $Site/?api=$url" -ForegroundColor Green }
+if ($Site) { Write-Host "  网站：         $Site   （你自己打开时会自动用本机后端；别人打开连这个隧道）" -ForegroundColor Green }
 Write-Host "  网站右上角「后端」里输入口令即可训练 / 上传" -ForegroundColor Green
 Write-Host "  关闭这个窗口或按 Ctrl+C = 停止后端和隧道" -ForegroundColor Green
 Write-Host "================================================================" -ForegroundColor Green
-if ($Site -and -not $NoBrowser) { Start-Process "$Site/?api=$url" }
+if ($Site -and -not $NoBrowser) { Start-Process $Site }
 
 try {
     while ($true) {
