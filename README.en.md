@@ -16,6 +16,12 @@ Phase 1 implements four foundational networks. A **registry + extensions folder*
 | MLP | `neurocore/models/mlp.py` | The simplest fully connected network — every neuron and weight is drawn in the graph |
 | Shared blocks | `neurocore/layers/` | Multi-head attention, FFN, Pre-LN block, sinusoidal / timestep / patch embeddings |
 
+## Live site
+
+**<https://visual-network-neuron.vercel.app>** — open and use. The page connects to a backend automatically: if `.\scripts\run.ps1 -Task ui` is running on your computer it trains there, otherwise it connects to the author's backend in watch mode. Token, tunnel and troubleshooting: [DEPLOY.en.md](DEPLOY.en.md).
+
+👉 **First time here?** Follow the [beginner's guide GETTING_STARTED.en.md](GETTING_STARTED.en.md) to install and run it on your own computer step by step (no password needed).
+
 ## Quick start (Windows PowerShell)
 
 ```powershell

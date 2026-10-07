@@ -16,6 +16,12 @@
 | MLP | `neurocore/models/mlp.py` | 가장 기본적인 완전연결 신경망 — 그래프에서 모든 뉴런과 가중치를 볼 수 있음 |
 | 공용 블록 | `neurocore/layers/` | 멀티헤드 어텐션, FFN, Pre-LN 블록, 사인파 / 타임스텝 / 패치 임베딩 |
 
+## 온라인 사이트
+
+**<https://visual-network-neuron.vercel.app>** — 열면 바로 사용할 수 있습니다. 페이지가 백엔드에 자동 연결됩니다: 내 컴퓨터에서 `.\scripts\run.ps1 -Task ui`가 실행 중이면 내 컴퓨터로 학습하고, 아니면 작성자 컴퓨터의 백엔드에 보기 모드로 연결됩니다. 암호·터널·문제 해결은 [DEPLOY.ko.md](DEPLOY.ko.md)를 보세요.
+
+👉 **처음이신가요?** [입문 가이드 GETTING_STARTED.ko.md](GETTING_STARTED.ko.md)를 따라 내 컴퓨터에 한 단계씩 설치하고 실행하세요(암호 불필요).
+
 ## 빠른 시작 (Windows PowerShell)
 
 ```powershell

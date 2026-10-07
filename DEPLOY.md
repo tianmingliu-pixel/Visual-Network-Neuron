@@ -11,6 +11,8 @@
         你电脑上的 python -m server（127.0.0.1:8765）        PyTorch 训练后端：你的 CPU / GPU，数据留在你电脑上
 ```
 
+> 这份文档写给**仓库主人**（把自己的电脑开放给网站访问者）。只想在自己电脑上使用，请看 [GETTING_STARTED.md](GETTING_STARTED.md)。下面的 `C:\NeuroCore` 换成你的项目文件夹。
+
 Vercel 只能放网页，跑不了 PyTorch；Hugging Face 的 Docker Space 现在需要付费。所以训练后端就放在你自己的电脑上，
 用 Cloudflare 的免费隧道给它一个 https 公网地址。不用付费、不用信用卡，还能用你自己的显卡。
 
@@ -19,7 +21,7 @@ Vercel 只能放网页，跑不了 PyTorch；Hugging Face 的 Docker Space 现�
 ## ① 推送到 GitHub（每次更新都用这一步）
 
 ```powershell
-cd D:\网络神经测试\核心\NeuroCore
+cd C:\NeuroCore
 .\scripts\publish_github.ps1 -User tianmingliu-pixel
 ```
 
@@ -45,9 +47,49 @@ cd D:\网络神经测试\核心\NeuroCore
 2. 自动安装 Cloudflare 的 `cloudflared`（winget）；
 3. 在后台启动后端，并建立隧道，得到 `https://xxxx.trycloudflare.com`（复制到剪贴板）；
 4. `-Publish`：把这个地址写进 `deploy/backend_url.txt` 并推送，Vercel 约 1 分钟后更新，**别人打开网站也会自动连上**；
-5. 打开 `你的网站/?api=隧道地址`；在网页右上角 **后端** 里输入口令即可训练、上传。
+5. 打开网站（固定网址 `https://visual-network-neuron.vercel.app`）。你在自己电脑上打开时，网页会自动连本机后端；在右上角 **后端** 里输入一次口令即可训练、上传（以后浏览器会记住）。
 
-关掉这个 PowerShell 窗口（或 Ctrl+C）= 停止后端和隧道，网站就连不上了。免费隧道每次启动地址都会变，所以每次用 `-Publish` 更新即可。
+关掉这个 PowerShell 窗口（或 Ctrl+C）= 停止后端和隧道，网站就连不上了。
+
+**地址会变吗？** 网站地址 `visual-network-neuron.vercel.app` 永远不变；隧道地址 `xxxx.trycloudflare.com` 每次启动都会随机变化，但它只在幕后用——`-Publish` 会自动把新地址告诉网站。所以分享给别人时只给 Vercel 网址，自己也直接打开 Vercel 网址（不要打开隧道地址：口令是按网址保存的，换了地址就要重新输入）。
+
+## 打开网站后：自动选择后端
+
+网页本身只是界面，训练和数据分析都在后端运行。打开网站时网页会**自动**按顺序找后端：
+
+| 情况 | 自动连到 | 右上角显示 | 能做什么 |
+|---|---|---|---|
+| 访问者自己电脑上开着后端（`run.ps1 -Task ui`） | 他自己的电脑 `127.0.0.1:8765` | 后端 · 本机 | 全部功能，用他自己的 CPU/GPU，数据不出他的电脑 |
+| 没有本机后端，你的隧道开着 | 你的电脑（经隧道） | 后端 · 网站后端 · 只读观看 | 只能观看；输入口令后才能训练 / 上传 |
+| 都没有 | — | 未连接 | 只有界面，什么都跑不了 |
+
+手动指定：点右上角 **后端** → 填后端地址 →「保存并重新连接」；点「自动选择」恢复自动。
+
+### 在哪里输入口令
+
+1. 点网页最右上角的 **后端** 按钮（在 中/EN 切换的右边），弹出「后端连接」面板；
+2. **后端地址**留空（= 自动 / 与本页同一个地址）；
+3. **口令**框填 `serve_public.ps1` 第一次让你设的口令（忘了：`Get-Content data\.public_token`）；
+4. 点「保存并重新连接」，右上角的「只读观看」消失后就能训练了。
+
+> 点「开始训练」没反应、日志里写着「需要口令」= 还没输入口令，不是少上传了文件。
+
+### 别人想用自己的电脑训练
+
+右上角会显示「👀 观看模式 · 自己训练？」，点开有步骤：
+
+1. 下载代码：<https://github.com/tianmingliu-pixel/Visual-Network-Neuron>
+2. 在代码文件夹运行 `.\scripts\setup_env.ps1`，再运行 `.\scripts\run.ps1 -Task ui`
+3. 回到网站刷新：网页自动改用他自己电脑上的后端（不需要口令，数据也不会传到你的电脑）
+
+## 常见问题
+
+| 现象 | 原因 / 解决 |
+|---|---|
+| `UnicodeEncodeError: 'charmap' codec can't encode` | 旧版本把中文写进日志时用了 Windows 默认编码；已修复（后端强制 UTF-8，脚本设置 `PYTHONUTF8=1`）。拉取最新代码即可 |
+| 「后端没有启动成功」 | 看 `data\backend.err.log`；端口 8765 被占用就先关掉其他 `run.ps1 -Task ui` 窗口 |
+| 网站显示「未连接」 | 你的 `serve_public.ps1` 没在运行，或刚用 `-Publish` 推送、Vercel 还在更新（等约 1 分钟） |
+| 点训练没反应 | 没输入口令（见上面「在哪里输入口令」） |
 
 ## 安全
 

@@ -16,6 +16,12 @@
 | MLP | `neurocore/models/mlp.py` | 最基础的全连接网络，结构图里能看到每个神经元和每条权重 |
 | 共享构件 | `neurocore/layers/` | 多头注意力、FFN、Pre-LN 块、正余弦 / 时间步 / Patch 嵌入 |
 
+## 在线网站
+
+**<https://visual-network-neuron.vercel.app>** —— 打开即用。网页会自动连接后端：你自己电脑上运行着 `.\scripts\run.ps1 -Task ui` 时用你自己的电脑训练，否则连作者电脑上的后端观看。口令、隧道、常见问题见 [DEPLOY.md](DEPLOY.md)。
+
+👉 **第一次使用？** 按 [新手指南 GETTING_STARTED.md](GETTING_STARTED.md) 一步一步在你自己的电脑上安装并运行（不需要密码）。
+
 ## 快速开始（Windows PowerShell）
 
 ```powershell
