@@ -221,8 +221,10 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [order.length]);
 
+  const [notice, setNotice] = useState("");  // 顶部错误提示 / top error banner
   const send = async (cmd) => {
     setBusy(true);
+    setNotice("");
     try {
       const extra = cmd === "start" ? { ...memOpts, resume: memOpts.resume || undefined } : {};
       const r = await control({ cmd, task: taskId, ...params, ...extra });
@@ -231,6 +233,8 @@ export default function App() {
       setStatus((s) => ({ ...s, ...r }));
     } catch (e) {
       log(`${cmd} 失败: ${e.message}`, "error");
+      setNotice(e.message);  // 错误同时显示在顶部，不只在页面最底部的日志里 / show errors at the top too
+      if (/口令/.test(e.message)) window.dispatchEvent(new Event("nc:need-token"));  // 缺口令 → 自动打开「后端」面板
     } finally {
       setBusy(false);
     }
@@ -271,6 +275,7 @@ export default function App() {
         <button className="btn icon" title="恢复默认布局" onClick={resetLayout}>⟲</button>
         <BackendSettings conn={conn} />
       </header>
+      {notice && <div className="notice-bar">⚠ {notice}<button className="btn small" onClick={() => setNotice("")}>✕</button></div>}
       {view === "data" ? (
         <main className="data-main">
           <DataView onTrain={trainOnData} customRunning={status.task === "custom"} log={log} />

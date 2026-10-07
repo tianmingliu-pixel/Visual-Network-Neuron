@@ -55,6 +55,7 @@ switch ($Task) {
         $web = Join-Path $script:ProjectRoot 'web'
         if (-not (Test-Path (Join-Path $web 'node_modules'))) { Push-Location $web; & npm install; Pop-Location }
         Write-Status 'STEP' "Backend on :$Port, Vite dev server on :5173 (hot reload)"
+        $env:PYTHONUTF8 = "1"; $env:PYTHONIOENCODING = "utf-8"   # 日志里中文不再报错 / UTF-8 logs
         $backend = Start-Process -FilePath $vpy -ArgumentList @('-m', 'server', '--port', "$Port") `
             -WorkingDirectory $script:ProjectRoot -PassThru -NoNewWindow
         Push-Location $web

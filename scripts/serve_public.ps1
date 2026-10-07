@@ -75,6 +75,7 @@ Write-Host "cloudflared: $cf"
 
 # ---- 启动后端 / backend ----------------------------------------------------------------
 Step "启动后端 http://127.0.0.1:$Port"
+$env:PYTHONUTF8 = "1"; $env:PYTHONIOENCODING = "utf-8"   # 日志里中文不再报错 / UTF-8 logs
 $env:NEUROCORE_TOKEN = $Token
 $env:NEUROCORE_PRIVATE_READ = "1"
 $beLog = Join-Path $dataDir 'backend.log'; $beErr = Join-Path $dataDir 'backend.err.log'

@@ -13,6 +13,12 @@ export default function BackendSettings({ conn }) {
 
   const check = () => getJSON("/api/version").then(setInfo).catch(() => setInfo({ error: true }));
   useEffect(() => { check(); }, [conn]);
+  // 点训练却没有口令时，自动弹出本面板 / open this panel when an action needs the token
+  useEffect(() => {
+    const f = () => setOpen(true);
+    window.addEventListener("nc:need-token", f);
+    return () => window.removeEventListener("nc:need-token", f);
+  }, []);
 
   const src = backendSource();
   const isLocal = apiBase().includes("127.0.0.1") || apiBase().includes("localhost");
